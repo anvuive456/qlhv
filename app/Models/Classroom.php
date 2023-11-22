@@ -16,5 +16,4 @@ class Classroom extends Model
     ];
     protected $table = 'classroom';
 
-    protected $dateFormat = 'dd-MM-yyyy';
 }

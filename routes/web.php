@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 */
 
 Route::get('/', function () {
-    return view('home');
+    return view('login');
 });
 
 Route::post('/login', function (Request $request) {
@@ -25,34 +25,40 @@ Route::post('/login', function (Request $request) {
         'username' => 'required',
         'password' => 'required'
     ]);
-    if(!$validator){
-      \Illuminate\Support\Facades\Session::flash('fail','Thiếu thông tin đăng nhập');
+    if (!$validator) {
+        return redirect('/');
     }
 
-    $canGo = Auth::guard($validator['type'])->attempt([
-        'username'=> $validator['username'],
-        'password'=> $validator['password'],
-    ]) ;
+    $canGo = Auth::guard($validator['type'])->attempt($request->only(['username', 'password']));
 
-    if($canGo) return redirect($validator['type'] . '.home');
-    else       \Illuminate\Support\Facades\Session::flash('fail','không thể đăng nhập');
-
+    if ($canGo) return redirect()->route($validator['type'] . '.home');
+    else {
+        return redirect('/');
+    }
 });
 
 Route::prefix('admin')->group(function () {
-    Route::get('/home',function (){
+    Route::get('/home', function () {
+        $students = \App\Models\Student::query()->get();
+        $teachers = \App\Models\Teacher::query()->selectRaw('teacher.id, teacher.full_name, classroom.title')->leftJoin('classroom', 'teacher.id', '=', 'classroom.teacher_id')->get();
+        $classrooms = \App\Models\Classroom::query()->get();
 
+        return view('admin.home', [
+            'students' => $students,
+            'teachers' => $teachers,
+            'classrooms' => $classrooms
+        ]);
     })->name('admin.home');
 });
 
 Route::prefix('teacher')->group(function () {
-    Route::get('/home',function (){
+    Route::get('/home', function () {
 
     })->name('teacher.home');
 });
 
 Route::prefix('student')->group(function () {
-    Route::get('/home',function (){
+    Route::get('/home', function () {
 
     })->name('student.home');
 });
